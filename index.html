@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS Agregator</title>
-</head>
-<body>
+  </head>
+  <body>
     <div class="main__container">
-        <form action="" class="rss_form">
-            <input id="rss_input" type="text" name="form-textfield" placeholder="RSS-Link must be there!">
-            <button id="rss_submit" type="submit" name="submit-button">Go!</button>
-        </form>
+      <form class="rss_form">
+        <input id="#rss_input" required="" autocomplete="off" type="text" name="url" placeholder="RSS-Link must be there!">
+        <button id="#rss_submit" type="submit" name="submit">Go!</button>
+      </form>
+      <div class="result"></div>
+      <div class="errors"></div>
     </div>
 </body>
 </html>
