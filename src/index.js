@@ -1,62 +1,151 @@
+import 'bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import * as yup from "yup";
-import onChange from "on-change";
-import render from "./view.js";
+import state from "./state.js";
+import i18next from "i18next";
+import ru from "./locale/ru.js";
+import { renderErrors, renderStaticElements, renderFeed } from "./view.js";
+import fetchFeed from "./fetch.js";
+import { parseFeed, getFeedElements } from "./parser.js";
 
-const app = () => {
+const app = async () => {
   const form = document.querySelector(".rss_form");
   const input = form.querySelector('input[name="url"]');
-
-  const state = {
-    form: {
-      url: "",
-      valid: false,
-    },
-    errors: [],
-    feeds: [],
-  };
-
+  const postsBlock = document.querySelector('.posts');
+  console.log(postsBlock)
   input.focus();
-
-  const watchState = onChange(state, () => {
-    render(state);
+  
+  const checkNewPosts = async () => {
+    const promises = state.subscribes.map(async (feedUrl) => {
+      try {
+        const response = await fetchFeed(feedUrl); 
+        const { data } = response;
+        const channel = await parseFeed(data.contents);
+  
+        if (channel) {
+          const body = document.body;
+          const content = await getFeedElements(channel);
+          const { posts } = content;
+  
+          // Получаем существующие идентификаторы постов
+          const existingPostIds = new Set(state.feeds.posts.map(post => post.id));
+          
+          // Фильтруем новые посты
+          const newPosts = posts.filter(post => !existingPostIds.has(post.id));
+  
+          if (!body.classList.contains('modal-open')) {
+            if (newPosts.length > 0) {
+              // Добавляем новые посты к существующим
+              state.feeds.posts.push(...newPosts.map(post => ({
+                ...post,
+                read: false  // Помечаем новые посты как непрочитанные
+              })));
+  
+              // Обновляем рендер
+              renderFeed(state, {
+                feedTitle: channel.title,
+                feedDescription: channel.description,
+                posts: newPosts,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Ошибка при проверке постов в потоке ${feedUrl}:`, error);
+      }
+    });
+  
+    await Promise.all(promises);
+    setTimeout(checkNewPosts, 5000);
+  };
+  checkNewPosts();
+  
+  const staticElements = {
+    title: document.getElementById("title"),
+    subtitle: document.getElementById("subtitle"),
+    label: document.getElementById("input_label"),
+    button: document.getElementById("rss_submit"),
+  };
+  
+  const i18instance = await i18next.createInstance();
+  i18instance.init({
+    lng: state.defLang,
+    debug: true,
+    resources: {
+      ru,
+    },
   });
-
+  
+  yup.setLocale({
+    string: {
+      url: i18instance.t("response.incorrectUrl"),
+    },
+  });
+  
   const schema = yup.object({
-    url: yup
-      .string()
-      .url("Введите корректный URL")
-      .required("Поле не может быть пустым!"),
+    url: yup.string().url().required(),
   });
-
-  const validateFeed = (url) => schema.validate({ url });
-
+  
+  const validateFeed = async (url) => {
+    return await schema.validate({ url });
+  };
+  
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const incomingUrl = input.value.trim().toLowerCase();
-
+    const incomingUrl = input.value.trim();
+    state.form.status = "filling";
+    
     try {
-      const { url } = await validateFeed(incomingUrl);
-
-      // Проверяем, был ли URL ранее добавлен
-      if (watchState.feeds.includes(url)) {
-        watchState.errors.push("Этот URL уже был добавлен.");
-        watchState.form.valid = false;
+      await validateFeed(incomingUrl);
+      if (state.subscribes.includes(incomingUrl)) {
+        state.form.status = "contains";
       } else {
-        watchState.feeds.push(url);
-        watchState.errors = [];
-        watchState.form.valid = true;
+        state.form.validation = true;
+        const response = await fetchFeed(incomingUrl, i18instance);
+        const { data } = response;
+        const channel = await parseFeed(data.contents);
+        if (!channel) {
+          state.form.status = "invalidResource";
+        } else {
+          state.subscribes.push(incomingUrl);
+          return getFeedElements(channel).then((content) => {
+            state.form.status = "processed";
+            const { feedTitle, feedDescription, posts } = content;
+            state.feeds.titles.push(feedTitle);
+            state.feeds.descriptions.push(feedDescription)
+            state.feeds.posts = posts;
+            console.log(state.feeds.posts)
+            input.value = '';
+            input.focus();
+            renderErrors(state, i18instance);
+            renderFeed(state, { feedTitle, feedDescription, posts });
+          });
+        }
       }
     } catch (err) {
-      // Обрабатываем ошибки валидации
-      watchState.errors.push(err.message);
-      watchState.form.valid = false;
+      state.form.status = "aborted";
+      state.form.validation = false;
     }
-
-    // Очищаем поле ввода
+    
     input.value = "";
     input.focus();
+    renderErrors(state, i18instance);
   });
 
-  render(state); // Инит
+  postsBlock.addEventListener('click', (e) => {
+    if (e.target instanceof HTMLAnchorElement) {
+      const postId = e.target.id;
+      
+      const post = state.feeds.posts.find(p => p.id === postId);
+      if (post && !post.read) {
+        post.read = true;
+        e.target.classList.remove('fw-bold');
+        e.target.classList.add('fw-normal');
+      }
+    }
+  });
+
+  renderStaticElements(staticElements, i18instance); // Refresh the UI to display changes
 };
+
 app();
