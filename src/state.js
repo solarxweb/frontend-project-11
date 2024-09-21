@@ -3,7 +3,7 @@ export default {
   form: {
     url: '',
     status: 'waiting',
-    validation: false,
+    validation: null,
   },
   feeds: {
     titles: [],
