@@ -2,17 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RSS Agregator</title>
   </head>
-  <body>
-    <div class="main__container">
-      <form class="rss_form">
-        <input id="#rss_input" required="" autocomplete="off" type="text" name="url" placeholder="RSS-Link must be there!">
-        <button id="#rss_submit" type="submit" name="submit">Go!</button>
-      </form>
-      <div class="result"></div>
-      <div class="errors"></div>
+  <body class="d-flex flex-column min-vh-100">
+    <div class="main__container container-fluid bg-dark p-5">
+      <div class="row">
+        <div class="col-md-10 col-lg-8 mx-auto text-white">
+          <h1 id="title"></h1>
+          <p id="subtitle"></p>
+          <form class="rss_form text-body">
+            <div class="row">
+              <div class="col">
+                <div class="form-floating">
+                  <input id="rss_input" class="form-control w-100" required="" autocomplete="off" type="text" name="url" placeholder="RSS-Link must be there!">
+                  <label id="input_label" for="rss_input"></label>
+                </div>
+              </div>
+              <div class="col-auto">
+                <button class='h-100 btn btn-lg btn-primary px-sm-5' id="rss_submit" type="submit" name="submit"></button>
+              </div>
+            </div>
+          </form>
+          <div class="feedback"></div>
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid container-xxl p-5 feed_container">
+      <div class="row">
+        <div class="col-md-10 col-lg-8 order-1 mx-auto posts">
+
+        </div>
+        <div class="col-md-10 col-lg-4 mx-auto order-0 order-lg-1 feeds">
+
+        </div>
+      </div>
     </div>
 </body>
 </html>
