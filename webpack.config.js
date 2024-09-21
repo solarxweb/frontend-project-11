@@ -1,39 +1,12 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { fileURLToPath } from 'url';
 import path from 'path';
-// import autoprefixer from 'autoprefixer';
 
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default {
-  mode: 'development',
-  entry: './src/index.js',
-  output: {
-    filename: 'bundle.js',
-    path: path.resolve(dirname, 'dist'),
-    clean: true,
-  },
-  devServer: {
-    static: path.resolve(dirname, 'dist'),
-    port: 8080,
-    hot: true,
-    watchFiles: ['src/**/*'],
-    open: true,
-    compress: true,
-    historyApiFallback: true,
-    client: {
-      logging: 'info',
-      overlay: true,
-      progress: true,
-      reconnect: true,
-    },
-  },
-  plugins: [new HtmlWebpackPlugin({ template: './index.html' })],
-  optimization: {
-    minimize: true,
-    usedExports: true,
-  },
+  mode: process.env.NODE_ENV || 'development',
   module: {
     rules: [
       {
@@ -61,4 +34,15 @@ export default {
       },
     ],
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: 'index.html',
+    }),
+  ],
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+    clean: true,
+  },
 };
+
