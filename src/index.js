@@ -108,7 +108,7 @@ const app = async () => {
             const { feedTitle, feedDescription, posts } = content;
             state.feeds.titles.push(feedTitle);
             state.feeds.descriptions.push(feedDescription)
-            state.feeds.posts = posts;
+            state.feeds.posts = [...state.feeds.posts, ...posts];
             console.log(state.feeds.posts)
             input.value = '';
             input.focus();
