@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "jest",
-    "build": "webpack build --output dist"
+    "build": "webpack",
+    "start": "webpack serve --mode development"
   },
   "author": "Daniil Romanenko",
   "license": "ISC",
