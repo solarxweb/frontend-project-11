@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "jest",
-    "build": "make develop"
+    "build": "webpack"
   },
   "author": "Daniil Romanenko",
   "license": "ISC",
