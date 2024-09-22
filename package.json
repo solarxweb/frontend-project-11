@@ -5,7 +5,8 @@
   "main": "./src/index.js",
   "type": "module",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "make develop"
   },
   "author": "Daniil Romanenko",
   "license": "ISC",
