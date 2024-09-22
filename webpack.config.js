@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 export default {
   entry: './src/index.js',
-  mode: process.env.NODE_ENV || 'development',
+  mode: 'development',
   module: {
     rules: [
       {
@@ -41,9 +41,7 @@ export default {
     }),
   ],
   output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, '/dist'),
-    clean: true,
+    path: path.resolve(__dirname, 'dist'),
   },
 };
 
