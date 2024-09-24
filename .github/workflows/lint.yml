@@ -34,6 +34,7 @@ jobs:
         run: |
           make install
           make build
+          sleep 10
         # Add environment variables
         env:
           CI: true
@@ -41,5 +42,8 @@ jobs:
       - name: Run linter
         run: make lint
 
-      - name: Run tests
+      - name: getting up tests
+        run: npx playwright install
+      
+      - name: Run test
         run: make test
