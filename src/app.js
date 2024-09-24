@@ -134,19 +134,29 @@ const app = async () => {
 
   postsBlock.addEventListener('click', (e) => {
     if (e.target instanceof HTMLAnchorElement) {
-      const postId = e.target.id;
+        const postId = e.target.id;
 
-      const post = state.feeds.posts.find((p) => p.id === postId);
-      if (post && !post.read) {
-        post.read = true;
-        e.target.classList.remove('fw-bold');
-        e.target.classList.add('fw-normal');
-        e.target.classList.add('link-secondary');
-      }
+        const post = state.feeds.posts.find((p) => p.id === postId);
+        if (post && !post.read) {
+            post.read = true;
+            e.target.classList.remove('fw-bold');
+            e.target.classList.add('fw-normal', 'link-secondary');
+        }
+    } else if (e.target.classList.contains('modal_btn')) {
+        const idOfElement = e.target.dataset.bsTarget.split('modal-')[1];
+        const element = document.getElementById(idOfElement);
+        const post = state.feeds.posts.find((p) => p.id === idOfElement);
+        if (post && !post.read) {
+            post.read = true;
+        }
+        element.classList.remove('fw-bold');
+        element.classList.add('fw-normal', 'link-secondary');
     }
-  });
+});
 
-  checkNewPosts();
+  
+
+  // checkNewPosts();
   renderStaticElements(staticElements, i18instance);
 };
 
