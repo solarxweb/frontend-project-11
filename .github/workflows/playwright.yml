@@ -17,8 +17,8 @@ jobs:
       run: make install
     - name: Run server
       run: |
-        make build &  
-        sleep 10  
+        npm run build &  
+        sleep 15
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
