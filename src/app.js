@@ -8,7 +8,7 @@ import { parseFeed, getFeedElements } from "./parser.js";
 
 const form = document.querySelector(".rss_form");
 const input = form.querySelector('input[name="url"]');
-const postsBlock = document.querySelector('.posts');
+const postsBlock = document.querySelector(".posts");
 
 const checkNewPosts = async () => {
   const promises = state.subscribes.map(async (feedUrl) => {
@@ -22,15 +22,19 @@ const checkNewPosts = async () => {
         const { posts } = content;
 
         // Получаем существующие идентификаторы постов
-        const existingPostIds = new Set(state.feeds.posts.map((post) => post.id));
+        const existingPostIds = new Set(
+          state.feeds.posts.map((post) => post.id)
+        );
         const newPosts = posts.filter((post) => !existingPostIds.has(post.id));
 
-        if (!body.classList.contains('modal-open')) {
+        if (!body.classList.contains("modal-open")) {
           if (newPosts.length > 0) {
-            state.feeds.posts.push(...newPosts.map((post) => ({
-              ...post,
-              read: false,
-            })));
+            state.feeds.posts.push(
+              ...newPosts.map((post) => ({
+                ...post,
+                read: false,
+              }))
+            );
             renderFeed(state, {
               feedTitle: channel.title,
               feedDescription: channel.description,
@@ -85,21 +89,19 @@ const app = async () => {
     state.form.status = "filling";
 
     try {
-      await validateUrl(incomingUrl)
-        .catch((err) => {
-          state.form.status = "aborted";
-          state.form.validation = false;
-          throw new Error(err);
-        });
+      await validateUrl(incomingUrl).catch((err) => {
+        state.form.status = "aborted";
+        state.form.validation = false;
+        throw new Error(err);
+      });
       if (state.subscribes.includes(incomingUrl)) {
         state.form.status = "contains";
       } else {
         state.form.validation = true;
-        const response = await fetchFeed(incomingUrl)
-          .catch((errFetch) => {
-            state.form.status = 'networkErr';
-            console.log(errFetch);
-          });
+        const response = await fetchFeed(incomingUrl).catch((errFetch) => {
+          state.form.status = "networkErr";
+          console.log(errFetch);
+        });
         const channel = await parseFeed(response.contents);
         if (!channel) {
           state.form.status = "invalidResource";
@@ -113,7 +115,7 @@ const app = async () => {
             state.feeds.descriptions.push(feedDescription);
             state.feeds.posts = [...state.feeds.posts, ...posts];
             console.log(state.feeds.posts);
-            input.value = '';
+            input.value = "";
             input.focus();
 
             renderErrors(state, i18instance);
@@ -132,28 +134,28 @@ const app = async () => {
     return renderErrors(state, i18instance);
   });
 
-  postsBlock.addEventListener('click', (e) => {
+  postsBlock.addEventListener("click", (e) => {
     if (e.target instanceof HTMLAnchorElement) {
-        const postId = e.target.id;
+      const postId = e.target.id;
 
-        const post = state.feeds.posts.find((p) => p.id === postId);
-        if (post && !post.read) {
-            post.read = true;
-            e.target.classList.remove('fw-bold');
-            e.target.classList.add('fw-normal', 'link-secondary');
-        }
-    } else if (e.target.classList.contains('modal_btn')) {
-        const idOfElement = e.target.dataset.bsTarget.split('modal-')[1];
-        const element = document.getElementById(idOfElement);
-        const post = state.feeds.posts.find((p) => p.id === idOfElement);
-        if (post && !post.read) {
-            post.read = true;
-        }
-        element.classList.remove('fw-bold');
-        element.classList.add('fw-normal', 'link-secondary');
+      const post = state.feeds.posts.find((p) => p.id === postId);
+      if (post && !post.read) {
+        post.read = true;
+        e.target.classList.remove("fw-bold");
+        e.target.classList.add("fw-normal", "link-secondary");
+      }
+    } else if (e.target.classList.contains("modal_btn")) {
+      const idOfElement = e.target.dataset.bsTarget.split("modal-")[1];
+      const element = document.getElementById(idOfElement);
+      const post = state.feeds.posts.find((p) => p.id === idOfElement);
+      if (post && !post.read) {
+        post.read = true;
+      }
+      element.classList.remove("fw-bold");
+      element.classList.add("fw-normal", "link-secondary");
     }
-});
-  // checkNewPosts();
+  });
+  checkNewPosts();
   renderStaticElements(staticElements, i18instance);
 };
 
