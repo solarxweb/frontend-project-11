@@ -37,10 +37,11 @@ const watchState = onChange(state, (path) => {
   }
 });
 
-const renderStaticElements = (elements, i18next) => {
+const renderStaticElements = (elements, i18n) => {
+  i18n = i18next;
   const keys = Object.entries(elements);
   keys.forEach(([key, element]) => {
-    element.textContent = i18next.t(`${key}`);
+    element.textContent = i18n.t(`${key}`);
   });
   return elements;
 };
