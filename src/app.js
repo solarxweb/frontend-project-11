@@ -141,6 +141,7 @@ const app = async () => {
         post.read = true;
         e.target.classList.remove('fw-bold');
         e.target.classList.add('fw-normal');
+        e.target.classList.add('link-secondary');
       }
     }
   });

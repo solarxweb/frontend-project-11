@@ -3,7 +3,6 @@ import i18next from "i18next";
 import state from "./state.js";
 
 const renderErrors = (watchedState, i18n) => {
-  i18n = i18next;
   const result = document.querySelector(".feedback");
 
   try {
@@ -38,7 +37,6 @@ const watchState = onChange(state, (path) => {
 });
 
 const renderStaticElements = (elements, i18n) => {
-  i18n = i18next;
   const keys = Object.entries(elements);
   keys.forEach(([key, element]) => {
     element.textContent = i18n.t(`${key}`);
@@ -79,7 +77,7 @@ const renderFeed = (watchedState) => {
     <ul class='list-group border-0 rounded-0'>
     ${posts.map((post) => `
         <li class='list-group-item d-flex justify-content-between align-items-start border-0 border-end-0'>
-            <a id='${post.id}' class='${post.read ? 'fw-normal' : 'fw-bold'}' href="${post.link}" target="_blank" rel="noopener noreferrer">${post.title}</a>
+            <a id='${post.id}' class='${post.read ? 'fw-normal link-secondary' : 'fw-bold'}' href="${post.link}" target="_blank" rel="noopener noreferrer">${post.title}</a>
             <button class='btn btn-outline-primary btn-sm modal_btn' type='button' data-bs-target='#modal-${post.id}' data-bs-toggle='modal'>Просмотр</button> 
         </li>
         <div class="modal fade" id="modal-${post.id}" tabindex="-1" aria-labelledby="modalLabel-${post.id}" aria-hidden="true">
