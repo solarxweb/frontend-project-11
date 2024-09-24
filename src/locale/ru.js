@@ -6,10 +6,10 @@ export default {
     button: 'Добавить',
     response: {
       alreadyExists: 'RSS уже существует',
-      urlAdded: 'RSS успешно добавлен',
+      urlAdded: 'RSS успешно загружен',
       incorrectUrl: 'Ссылка должна быть валидным URL',
       invalidResource: 'Ресурс не содержит валидный RSS',
-      networkErr: 'Ошибка при загрузке данных. Попробуйте позже.',
-    }
-  }
-}
+      networkErr: 'Ошибка сети',
+    },
+  },
+};

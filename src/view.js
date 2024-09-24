@@ -1,22 +1,11 @@
-import state from "./state.js";
 import onChange from "on-change";
+import state from "./state.js";
 
-const watchState = onChange(state, (path, value) => {
-  if (path === 'state.form.status') {
-    renderErrors(watchState, i18n);
-  }
-});
-
-const renderStaticElements = (elements, i18n) => {
-  const keys = Object.entries(elements);
-  keys.forEach(([key, element]) => element.textContent = i18n.t(`${key}`));
-};
-
-const renderErrors = (watchState, i18n) => {
+const renderErrors = (watchedState, i18n) => {
   const result = document.querySelector(".feedback");
 
   try {
-    switch (watchState.form.status) {
+    switch (watchedState.form.status) {
       case "contains":
         result.textContent = i18n.t("response.alreadyExists");
         break;
@@ -40,14 +29,28 @@ const renderErrors = (watchState, i18n) => {
   }
 };
 
-const renderFeed = (watchState) => {
+const watchState = onChange(state, (path) => {
+  if (path === 'state.form.status') {
+    renderErrors(watchState, i18n);
+  }
+});
+
+const renderStaticElements = (elements, i18n) => {
+  const keys = Object.entries(elements);
+  keys.forEach(([key, element]) => {
+    element.textContent = i18n.t(`${key}`);
+  });
+  return elements;
+};
+
+const renderFeed = (watchedState) => {
   const postsContainer = document.querySelector('.posts');
   const feedsContainer = document.querySelector('.feeds');
-  
-  const { feeds } = watchState;
+
+  const { feeds } = watchedState;
   const { titles, descriptions, posts } = feeds;
   console.log(posts);
-  
+
   feedsContainer.innerHTML = `
     <div class='card border-0'>
         <div class='card-body'>

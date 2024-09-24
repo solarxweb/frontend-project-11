@@ -12,4 +12,4 @@ export default {
   },
   subscribes: [],
   errors: [],
-}
+};
