@@ -5,7 +5,7 @@ develop:
 	npx webpack serve
 
 build:
-	rm -r dist
+	rimraf dist
 	npx cross-env NODE_ENV=production npx webpack
 
 test:
