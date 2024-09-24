@@ -3,7 +3,7 @@ import i18next from "i18next";
 import state from "./state.js";
 
 const renderErrors = (watchedState, i18n) => {
-  const i18n = i18next;
+  i18n = i18next;
   const result = document.querySelector(".feedback");
 
   try {
