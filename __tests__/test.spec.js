@@ -40,7 +40,7 @@ test("check application", async ({ page }) => {
 
   expect(await modalWindow.isHidden()).toBe(true);
   await page.locator('.modal_btn').first().click();
-  
+
   expect(await modalWindow.isVisible()).toBe(true);
 
   const closeModalBtn = page.locator(".modal-footer > button").first();
@@ -70,6 +70,6 @@ test("check application", async ({ page }) => {
 //   await input.fill("https://lorem-rss.hexlet.app/feed");
 //   await btn.click();
 
-//   
+//
 //   await expect(feedback).toHaveText("Ошибка сервера - попробуйте позже.");
 // });
