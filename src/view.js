@@ -3,7 +3,7 @@ import i18next from "i18next";
 import state from "./state.js";
 
 const renderErrors = (watchedState, i18n) => {
-  i18n = i18next;
+  const i18n = i18next;
   const result = document.querySelector(".feedback");
 
   try {
@@ -37,10 +37,10 @@ const watchState = onChange(state, (path) => {
   }
 });
 
-const renderStaticElements = (elements, i18n) => {
+const renderStaticElements = (elements, i18next) => {
   const keys = Object.entries(elements);
   keys.forEach(([key, element]) => {
-    element.textContent = i18n.t(`${key}`);
+    element.textContent = i18next.t(`${key}`);
   });
   return elements;
 };
