@@ -153,9 +153,6 @@ const app = async () => {
         element.classList.add('fw-normal', 'link-secondary');
     }
 });
-
-  
-
   // checkNewPosts();
   renderStaticElements(staticElements, i18instance);
 };
