@@ -21,6 +21,7 @@ rules:
   import/extensions: 0
   no-underscore-dangle: 0
   quotes: 0
+  no-param-reassign: 0
 
 settings:
   babel:
