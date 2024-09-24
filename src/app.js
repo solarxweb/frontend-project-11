@@ -22,9 +22,7 @@ const checkNewPosts = async () => {
         const { posts } = content;
 
         // Получаем существующие идентификаторы постов
-        const existingPostIds = new Set(
-          state.feeds.posts.map((post) => post.id)
-        );
+        const existingPostIds = new Set(state.feeds.posts.map((post) => post.id));
         const newPosts = posts.filter((post) => !existingPostIds.has(post.id));
 
         if (!body.classList.contains("modal-open")) {
@@ -33,7 +31,7 @@ const checkNewPosts = async () => {
               ...newPosts.map((post) => ({
                 ...post,
                 read: false,
-              }))
+              })),
             );
             renderFeed(state, {
               feedTitle: channel.title,
