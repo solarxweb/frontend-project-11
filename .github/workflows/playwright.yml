@@ -15,6 +15,13 @@ jobs:
         node-version: lts/*
     - name: Install dependencies
       run: make install
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run server
+      run: |
+        npm start &  
+        sleep 10  
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
