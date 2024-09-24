@@ -9,7 +9,7 @@ build:
 	npx cross-env NODE_ENV=production npx webpack
 
 test:
-	npx jest
+	npx playwright test
 
 lint:
 	npx eslint .
