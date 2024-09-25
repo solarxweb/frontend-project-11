@@ -1,5 +1,4 @@
 import onChange from 'on-change';
-import i18next from 'i18next';
 import state from './state.js';
 
 const renderErrors = (watchedState, i18n) => {
