@@ -31,7 +31,7 @@ const renderErrors = (watchedState, i18n) => {
 
 const watchState = onChange(state, (path) => {
   if (path === 'state.form.status') {
-    renderErrors(watchState, i18n);
+    renderErrors(watchState);
   }
 });
 /* eslint-disable no-param-reassign */
