@@ -38,15 +38,15 @@ const watchState = onChange(state, (path) => {
 
 const renderStaticElements = (elements, i18n) => {
   const keys = Object.entries(elements);
-  const messages = {};                  
-  keys.forEach(([key, element]) => {    //
-    messages[key] = i18n.t(`${key}`);   // <===----- костыль чтобы избежать ошибки: Assignment to property of function parameter 'element' no-param-reassign
-  });                                   //
+  const messages = {};
+  keys.forEach(([key, _element]) => {
+    messages[key] = i18n.t(`${key}`);
+  });
   keys.forEach(([key, element]) => {
-    element.textContent = messages[key]; 
+    element.textContent = messages[key];
   });
 
-  return elements; 
+  return elements;
 };
 
 const makeModalandRead = (e) => {
