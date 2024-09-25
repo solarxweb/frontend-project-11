@@ -36,14 +36,14 @@ const watchState = onChange(state, (path) => {
   }
 });
 
+
 const renderStaticElements = (elements, i18n) => {
-  const keys = Object.entries(elements);
-  const messages = {};
-  keys.forEach(([key, _element]) => {
-    messages[key] = i18n.t(`${key}`);
-  });
-  keys.forEach(([key, element]) => {
-    element.textContent = messages[key];
+  const keys = Object.keys(elements);
+  keys.forEach(key => {
+    const updatedText = i18n.t(`${key}`);
+    if (elements[key]) {
+      elements[key].textContent = updatedText;
+    }
   });
 
   return elements;
