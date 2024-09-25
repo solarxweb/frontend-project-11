@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 const fetchFeed = async (url) => {
   const proxyUrl = `https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`;

@@ -1,16 +1,16 @@
-import * as yup from "yup";
-import i18next from "i18next";
-import state from "./state.js";
-import ru from "./locale/ru.js";
+import * as yup from 'yup';
+import i18next from 'i18next';
+import state from './state.js';
+import ru from './locale/ru.js';
 import {
   renderErrors, renderStaticElements, renderFeed, makeModalandRead,
-} from "./view.js";
-import fetchFeed from "./fetch.js";
-import { parseFeed, getFeedElements } from "./parser.js";
+} from './view.js';
+import fetchFeed from './fetch.js';
+import { parseFeed, getFeedElements } from './parser.js';
 
-const form = document.querySelector(".rss_form");
+const form = document.querySelector('.rss_form');
 const input = form.querySelector('input[name="url"]');
-const postsBlock = document.querySelector(".posts");
+const postsBlock = document.querySelector('.posts');
 
 const checkNewPosts = async () => {
   const promises = state.subscribes.map(async (feedUrl) => {
@@ -52,10 +52,10 @@ const checkNewPosts = async () => {
   setTimeout(checkNewPosts, 5000);
 };
 const staticElements = {
-  title: document.getElementById("title"),
-  subtitle: document.getElementById("subtitle"),
-  label: document.getElementById("input_label"),
-  button: document.getElementById("rss_submit"),
+  title: document.getElementById('title'),
+  subtitle: document.getElementById('subtitle'),
+  label: document.getElementById('input_label'),
+  button: document.getElementById('rss_submit'),
 };
 
 const app = async () => {
@@ -72,7 +72,7 @@ const app = async () => {
 
   yup.setLocale({
     string: {
-      url: i18instance.t("response.incorrectUrl"),
+      url: i18instance.t('response.incorrectUrl'),
     },
   });
 
@@ -82,40 +82,40 @@ const app = async () => {
 
   const validateUrl = async (url) => schema.validate({ url });
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     staticElements.button.disabled = true;
     const incomingUrl = input.value.trim();
-    state.form.status = "filling";
+    state.form.status = 'filling';
 
     try {
       await validateUrl(incomingUrl).catch((err) => {
-        state.form.status = "aborted";
+        state.form.status = 'aborted';
         state.form.validation = false;
         throw new Error(err);
       });
       if (state.subscribes.includes(incomingUrl)) {
-        state.form.status = "contains";
+        state.form.status = 'contains';
       } else {
         state.form.validation = true;
         const response = await fetchFeed(incomingUrl).catch((errFetch) => {
-          state.form.status = "networkErr";
+          state.form.status = 'networkErr';
           console.log(errFetch);
         });
         const channel = await parseFeed(response.contents);
         if (!channel) {
-          state.form.status = "invalidResource";
+          state.form.status = 'invalidResource';
         } else {
           state.subscribes.push(incomingUrl);
           return getFeedElements(channel).then((content) => {
-            state.form.status = "processed";
+            state.form.status = 'processed';
 
             const { feedTitle, feedDescription, posts } = content;
             state.feeds.titles.push(feedTitle);
             state.feeds.descriptions.push(feedDescription);
             state.feeds.posts = [...state.feeds.posts, ...posts];
             console.log(state.feeds.posts);
-            input.value = "";
+            input.value = '';
             input.focus();
 
             renderErrors(state, i18instance);
@@ -127,14 +127,14 @@ const app = async () => {
       console.log(`Unexpected behavior: ${err}`);
     } finally {
       staticElements.button.disabled = false;
-      input.value = "";
+      input.value = '';
       input.focus();
     }
 
     return renderErrors(state, i18instance);
   });
 
-  postsBlock.addEventListener("click", (e) => {
+  postsBlock.addEventListener('click', (e) => {
     makeModalandRead(e);
   });
 

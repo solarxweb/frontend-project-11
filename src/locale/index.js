@@ -1,4 +1,4 @@
-import i18next from "i18next";
+import i18next from 'i18next';
 import ru from './ru.js';
 
 const i18n = () => {
