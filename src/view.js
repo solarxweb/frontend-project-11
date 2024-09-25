@@ -35,11 +35,10 @@ const watchState = onChange(state, (path) => {
     renderErrors(watchState, i18next);
   }
 });
-
-
+/* eslint-disable no-param-reassign */
 const renderStaticElements = (elements, i18n) => {
   const keys = Object.keys(elements);
-  keys.forEach(key => {
+  keys.forEach((key) => {
     const updatedText = i18n.t(`${key}`);
     if (elements[key]) {
       elements[key].textContent = updatedText;
@@ -48,7 +47,7 @@ const renderStaticElements = (elements, i18n) => {
 
   return elements;
 };
-
+/* eslint-enable no-param-reassign */
 const makeModalandRead = (e) => {
   if (e.target instanceof HTMLAnchorElement) {
     const postId = e.target.id;
