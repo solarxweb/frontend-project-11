@@ -27,7 +27,7 @@ const checkNewPosts = async () => {
         const existingPostIds = new Set(state.feeds.posts.map((post) => post.id));
         const newPosts = posts.filter((post) => !existingPostIds.has(post.id));
 
-        if (!body.classList.contains("modal-open")) {
+        if (!body.classList.contains('modal-open')) {
           if (newPosts.length > 0) {
             state.feeds.posts.push(
               ...newPosts.map((post) => ({
