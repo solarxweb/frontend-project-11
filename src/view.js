@@ -15,10 +15,10 @@ export const pageElements = {
   body: document.body,
 };
 
-const reset = () => {
-  pageElements.button.disabled = false;
+const updateFormAndBtn = (watchState) => {
   pageElements.input.value = '';
   pageElements.input.focus();
+  pageElements.button.disabled = watchState.form.status === 'filling';
 };
 
 const renderErrors = (watchState, i18n) => {
@@ -187,5 +187,5 @@ const renderFeed = () => {
 /* eslint-enable no-param-reassign */
 export {
   renderErrors, renderStaticElements, renderFeed, makeRead, showModal,
-  reset,
+  updateFormAndBtn,
 };

@@ -4,7 +4,7 @@ import state from './state.js';
 import ru from './locale/ru.js';
 import {
   pageElements, renderErrors, renderStaticElements, renderFeed,
-  makeRead, showModal, reset,
+  makeRead, showModal, updateFormAndBtn,
 } from './view.js';
 import fetchFeed from './fetch.js';
 import parseFeed from './parser.js';
@@ -81,9 +81,10 @@ const app = () => {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const incomingValue = input.value.trim();
     state.form.status = 'filling';
+    const incomingValue = input.value.trim();
 
+    updateFormAndBtn(state);
     validateUrl(incomingValue)
       .then(({ url }) => {
         if (state.subscribes.includes(url)) {
@@ -113,8 +114,8 @@ const app = () => {
         state.form.status = error.message;
       })
       .finally(() => {
+        updateFormAndBtn(state);
         renderErrors(state, i18instance);
-        reset();
       });
   });
 
@@ -137,7 +138,7 @@ const app = () => {
   checkNewPosts();
   renderStaticElements({
     title, button, label, subtitle,
-  }, i18instance);
+  }, i18instance, state);
   renderErrors(state, i18instance);
 };
 
