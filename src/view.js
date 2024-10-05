@@ -177,7 +177,7 @@ const renderFeed = () => {
     const feedItem = createFeedItem(title, descriptions[index]);
     return feedsUl.append(feedItem);
   });
-/* eslint-disable no-param-reassign */
+  /* eslint-disable no-param-reassign */
   posts.map((post) => {
     const id = uuidv4();
     const postItem = createPostItem(post.id = id, post.title, post.link, post.read);
