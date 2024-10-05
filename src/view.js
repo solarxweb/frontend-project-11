@@ -23,7 +23,7 @@ const reset = () => {
 
 const renderErrors = (watchState, i18n) => {
   try {
-    console.log("Current status:", watchState.form.status); // Для отладки
+    console.log('Current status:', watchState.form.status); // Для отладки
     switch (watchState.form.status) {
       case 'alreadyExists':
         pageElements.feedback.textContent = i18n.t('response.alreadyExists');
@@ -75,13 +75,13 @@ const makeRead = (e) => {
 
 // chut' menee legendarnaya
 const showModal = (title, description, link, anchor) => {
-  const modalTitle = document.querySelector(`.modal-title`);
+  const modalTitle = document.querySelector('.modal-title');
   modalTitle.textContent = title;
 
-  const modalBody = document.querySelector(`.modal-body`);
+  const modalBody = document.querySelector('.modal-body');
   modalBody.textContent = description;
 
-  const modalFooter = document.querySelector(`.modal-footer a`);
+  const modalFooter = document.querySelector('.modal-footer a');
   modalFooter.setAttribute('href', link);
 
   anchor.classList.remove('fw-bold');
@@ -177,14 +177,14 @@ const renderFeed = () => {
     const feedItem = createFeedItem(title, descriptions[index]);
     return feedsUl.append(feedItem);
   });
-
+  /* eslint-disable no-param-reassign */
   posts.map((post) => {
     const id = uuidv4();
     const postItem = createPostItem(post.id = id, post.title, post.link, post.read);
     return postsUl.append(postItem);
   });
 };
-
+ /* eslint-enable no-param-reassign */
 export {
   renderErrors, renderStaticElements, renderFeed, makeRead, showModal,
   reset,
