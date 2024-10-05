@@ -3,65 +3,57 @@ import i18next from 'i18next';
 import state from './state.js';
 import ru from './locale/ru.js';
 import {
-  renderErrors, renderStaticElements, renderFeed, makeModalandRead,
+  pageElements, renderErrors, renderStaticElements, renderFeed,
+  makeRead, showModal, reset,
 } from './view.js';
 import fetchFeed from './fetch.js';
-import { parseFeed, getFeedElements } from './parser.js';
+import parseFeed from './parser.js';
 
-const form = document.querySelector('.rss_form');
-const input = form.querySelector('input[name="url"]');
-const postsBlock = document.querySelector('.posts');
+const checkNewPosts = () => {
+  /* eslint-disable prefer-destructuring */
+  const body = pageElements.body;
+  /* eslint-enable prefer-destructuring */
 
-const checkNewPosts = async () => {
-  const promises = state.subscribes.map(async (feedUrl) => {
-    try {
-      const response = await fetchFeed(feedUrl);
-      const channel = await parseFeed(response.contents);
+  const promises = state.subscribes.map((feedUrl) => fetchFeed(feedUrl)
+    .then((data) => parseFeed(data.contents))
+    .then((result) => {
+      console.log(result);
+      const { fTitle, fDescription, posts } = result;
+      const existingNames = new Set(state.feeds.posts.map(({ title }) => title));
+      const newPosts = posts.filter((post) => !existingNames.has(post.title));
 
-      if (channel) {
-        const { body } = document;
-        const content = await getFeedElements(channel);
-        const { posts } = content;
+      if (!body.classList.contains('modal-open') && newPosts.length > 0) {
+        state.feeds.posts.push(...newPosts.map((post) => ({
+          ...post,
+          read: false,
+        })));
 
-        // Получаем существующие идентификаторы постов
-        const existingPostIds = new Set(state.feeds.posts.map((post) => post.id));
-        const newPosts = posts.filter((post) => !existingPostIds.has(post.id));
-
-        if (!body.classList.contains('modal-open')) {
-          if (newPosts.length > 0) {
-            state.feeds.posts.push(
-              ...newPosts.map((post) => ({
-                ...post,
-                read: false,
-              })),
-            );
-            renderFeed(state, {
-              feedTitle: channel.title,
-              feedDescription: channel.description,
-              posts: newPosts,
-            });
-          }
-        }
+        renderFeed(state, {
+          feedTitle: fTitle,
+          feedDescription: fDescription,
+          posts: newPosts,
+        });
       }
-    } catch (error) {
+    })
+    .catch((error) => {
       console.error(`Ошибка при проверке постов в потоке ${feedUrl}:`, error);
-    }
-  });
-
-  await Promise.all(promises);
-  setTimeout(checkNewPosts, 5000);
-};
-const staticElements = {
-  title: document.getElementById('title'),
-  subtitle: document.getElementById('subtitle'),
-  label: document.getElementById('input_label'),
-  button: document.getElementById('rss_submit'),
+    }));
+  Promise.all(promises)
+    .catch((error) => {
+      console.error('Ошибка при получении постов:', error);
+    })
+    .finally(() => {
+      setTimeout(checkNewPosts, 5000);
+    });
 };
 
-const app = async () => {
+const app = () => {
+  const {
+    form, input, button, label, title, subtitle, postsContainer,
+  } = pageElements;
   input.focus();
 
-  const i18instance = await i18next.createInstance();
+  const i18instance = i18next.createInstance();
   i18instance.init({
     lng: state.defLang,
     debug: true,
@@ -80,66 +72,73 @@ const app = async () => {
     url: yup.string().url().required(),
   });
 
-  const validateUrl = async (url) => schema.validate({ url });
+  const validateUrl = (url) => schema.validate({ url })
+    .then((result) => result)
+    .catch((err) => {
+      console.log(err);
+      throw new Error('incorrectUrl');
+    });
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
-    staticElements.button.disabled = true;
-    const incomingUrl = input.value.trim();
+    const incomingValue = input.value.trim();
     state.form.status = 'filling';
 
-    try {
-      await validateUrl(incomingUrl).catch((err) => {
-        state.form.status = 'aborted';
-        state.form.validation = false;
-        throw new Error(err);
-      });
-      if (state.subscribes.includes(incomingUrl)) {
-        state.form.status = 'contains';
-      } else {
-        state.form.validation = true;
-        const response = await fetchFeed(incomingUrl).catch((errFetch) => {
-          state.form.status = 'networkErr';
-          console.log(errFetch);
-        });
-        const channel = await parseFeed(response.contents);
-        if (!channel) {
-          state.form.status = 'invalidResource';
-        } else {
-          state.subscribes.push(incomingUrl);
-          return getFeedElements(channel).then((content) => {
-            state.form.status = 'processed';
-
-            const { feedTitle, feedDescription, posts } = content;
-            state.feeds.titles.push(feedTitle);
-            state.feeds.descriptions.push(feedDescription);
-            state.feeds.posts = [...state.feeds.posts, ...posts];
-            console.log(state.feeds.posts);
-            input.value = '';
-            input.focus();
-
-            renderErrors(state, i18instance);
-            renderFeed(state, { feedTitle, feedDescription, posts });
-          });
+    validateUrl(incomingValue)
+      .then(({ url }) => {
+        if (state.subscribes.includes(url)) {
+          state.form.validation = false;
+          throw new Error('alreadyExists');
         }
-      }
-    } catch (err) {
-      console.log(`Unexpected behavior: ${err}`);
-    } finally {
-      staticElements.button.disabled = false;
-      input.value = '';
-      input.focus();
-    }
-
-    return renderErrors(state, i18instance);
+        state.form.validation = true;
+        console.log(url);
+        return fetchFeed(url);
+      })
+      .then((data) => {
+        state.subscribes.push(incomingValue);
+        state.form.status = 'processed';
+        return parseFeed(data.contents);
+      })
+      .then((result) => {
+        const { feedTitle, feedDescription, posts } = result;
+        state.feeds.titles = [...state.feeds.titles, feedTitle];
+        state.feeds.descriptions = [...state.feeds.descriptions, feedDescription];
+        state.feeds.posts = [...state.feeds.posts, ...posts];
+        console.log(state.feeds.posts);
+        renderFeed(result);
+      })
+      .catch((error) => {
+        console.error(error);
+        state.form.validation = false;
+        state.form.status = error.message;
+      })
+      .finally(() => {
+        renderErrors(state, i18instance);
+        reset();
+      });
   });
 
-  postsBlock.addEventListener('click', (e) => {
-    makeModalandRead(e);
+  postsContainer.addEventListener('click', (e) => {
+    const elementId = e.target.dataset.id;
+    const post = state.feeds.posts.find((p) => p.id === elementId);
+    if (!post) {
+      return;
+    }
+    post.read = true;
+    if (e.target instanceof HTMLAnchorElement) {
+      makeRead(e);
+    }
+    if (e.target instanceof HTMLButtonElement) {
+      const anchor = e.target.previousSibling;
+      showModal(post.title, post.description, post.link, anchor);
+    }
   });
 
   checkNewPosts();
-  renderStaticElements(staticElements, i18instance);
+  renderStaticElements({
+    title, button, label, subtitle,
+  }, i18instance);
+  renderErrors(state, i18instance);
 };
 
 export default app;
