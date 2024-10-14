@@ -5,11 +5,6 @@ export default {
     status: 'waiting',
     validation: null,
   },
-  feeds: {
-    titles: [],
-    descriptions: [],
-    posts: [],
-  },
+  feeds: [],
   subscribes: [],
-  errors: [],
 };

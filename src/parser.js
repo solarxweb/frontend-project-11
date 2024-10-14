@@ -21,7 +21,7 @@ const parseFeed = (data) => {
       link,
     };
   });
-  return Promise.resolve({ feedTitle, feedDescription, posts });
+  return ({ feedTitle, feedDescription, posts });
 };
 
 export default parseFeed;

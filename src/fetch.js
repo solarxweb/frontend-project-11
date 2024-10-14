@@ -11,8 +11,11 @@ const fetchFeed = (url) => {
       return response.data;
     })
     .catch((error) => {
-      console.error(error);
-      throw new Error('networkErr');
+      console.log(error.message);
+      if (error.message === 'Network Error') {
+        throw new Error('networkErr');
+      }
+      throw error;
     });
 };
 

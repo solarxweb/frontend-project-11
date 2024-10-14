@@ -1,10 +1,8 @@
 import * as yup from 'yup';
-import i18next from 'i18next';
-import state from './state.js';
-import ru from './locale/ru.js';
+import { v4 as uuidv4 } from 'uuid';
 import {
-  pageElements, renderErrors, renderStaticElements, renderFeed,
-  makeRead, showModal, updateFormAndBtn,
+  watchedState, pageElements, showModal,
+  makeRead, i18instance,
 } from './view.js';
 import fetchFeed from './fetch.js';
 import parseFeed from './parser.js';
@@ -14,30 +12,30 @@ const checkNewPosts = () => {
   const body = pageElements.body;
   /* eslint-enable prefer-destructuring */
 
-  const promises = state.subscribes.map((feedUrl) => fetchFeed(feedUrl)
+  const promises = watchedState.subscribes.map((feedUrl) => fetchFeed(feedUrl)
     .then((data) => parseFeed(data.contents))
     .then((result) => {
-      console.log(result);
-      const { fTitle, fDescription, posts } = result;
-      const existingNames = new Set(state.feeds.posts.map(({ title }) => title));
+      const oldPosts = watchedState.feeds.flatMap((feed) => feed.posts);
+      const { fTitle, posts } = result;
+      const existingNames = new Set(oldPosts.map(({ title }) => title));
       const newPosts = posts.filter((post) => !existingNames.has(post.title));
 
       if (!body.classList.contains('modal-open') && newPosts.length > 0) {
-        state.feeds.posts.push(...newPosts.map((post) => ({
-          ...post,
-          read: false,
-        })));
+        const feedIndex = watchedState.feeds.findIndex((feed) => feed.title === fTitle);
 
-        renderFeed(state, {
-          feedTitle: fTitle,
-          feedDescription: fDescription,
-          posts: newPosts,
-        });
+        if (feedIndex !== -1) {
+          watchedState.feeds[feedIndex].posts.push(...newPosts.map((post) => ({
+            ...post,
+            id: uuidv4(),
+            read: false,
+          })));
+        }
       }
     })
     .catch((error) => {
       console.error(`Ошибка при проверке постов в потоке ${feedUrl}:`, error);
     }));
+
   Promise.all(promises)
     .catch((error) => {
       console.error('Ошибка при получении постов:', error);
@@ -47,81 +45,63 @@ const checkNewPosts = () => {
     });
 };
 
-const app = () => {
-  const {
-    form, input, button, label, title, subtitle, postsContainer,
-  } = pageElements;
+const app = async () => {
+  const { form, input, postsContainer } = pageElements;
   input.focus();
-
-  const i18instance = i18next.createInstance();
-  i18instance.init({
-    lng: state.defLang,
-    debug: true,
-    resources: {
-      ru,
-    },
-  });
 
   yup.setLocale({
     string: {
       url: i18instance.t('response.incorrectUrl'),
+      notOneOf: i18instance.t('response.alreadyExists'),
     },
   });
 
-  const schema = yup.object({
-    url: yup.string().url().required(),
-  });
-
-  const validateUrl = (url) => schema.validate({ url })
-    .then((result) => result)
-    .catch((err) => {
-      console.log(err);
-      throw new Error('incorrectUrl');
-    });
+  const validateUrl = (url, urls) => {
+    const schema = yup
+      .string()
+      .trim()
+      .url('incorrectUrl')
+      .notOneOf(urls, 'alreadyExists');
+    return schema.validate(url);
+  };
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    state.form.status = 'filling';
+    watchedState.form.status = 'filling';
     const incomingValue = input.value.trim();
 
-    updateFormAndBtn(state);
-    validateUrl(incomingValue)
-      .then(({ url }) => {
-        if (state.subscribes.includes(url)) {
-          state.form.validation = false;
-          throw new Error('alreadyExists');
-        }
-        state.form.validation = true;
-        console.log(url);
+    validateUrl(incomingValue, watchedState.subscribes)
+      .then((url) => {
+        watchedState.form.validation = true;
         return fetchFeed(url);
       })
       .then((data) => {
-        state.subscribes.push(incomingValue);
-        state.form.status = 'processed';
-        return parseFeed(data.contents);
-      })
-      .then((result) => {
-        const { feedTitle, feedDescription, posts } = result;
-        state.feeds.titles = [...state.feeds.titles, feedTitle];
-        state.feeds.descriptions = [...state.feeds.descriptions, feedDescription];
-        state.feeds.posts = [...state.feeds.posts, ...posts];
-        console.log(state.feeds.posts);
-        renderFeed(result);
+        const parsedPage = parseFeed(data.contents);
+        const { feedTitle, feedDescription, posts } = parsedPage;
+        watchedState.subscribes.push(incomingValue);
+        const postsWithIds = posts.map((post) => ({
+          ...post,
+          id: uuidv4(),
+          read: false,
+        }));
+        watchedState.feeds.push({
+          feedTitle,
+          feedDescription,
+          posts: postsWithIds,
+        });
+        watchedState.form.status = "processed";
       })
       .catch((error) => {
         console.error(error);
-        state.form.validation = false;
-        state.form.status = error.message;
-      })
-      .finally(() => {
-        updateFormAndBtn(state);
-        renderErrors(state, i18instance);
+        watchedState.form.validation = false;
+        watchedState.form.status = error.message;
       });
   });
 
   postsContainer.addEventListener('click', (e) => {
     const elementId = e.target.dataset.id;
-    const post = state.feeds.posts.find((p) => p.id === elementId);
+    const posts = watchedState.feeds.flatMap((feed) => feed.posts);
+    const post = posts.find((p) => p.id === elementId);
     if (!post) {
       return;
     }
@@ -134,12 +114,7 @@ const app = () => {
       showModal(post.title, post.description, post.link, anchor);
     }
   });
-
-  checkNewPosts();
-  renderStaticElements({
-    title, button, label, subtitle,
-  }, i18instance, state);
-  renderErrors(state, i18instance);
 };
 
-export default app;
+checkNewPosts();
+export { app, i18instance };

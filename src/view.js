@@ -1,8 +1,18 @@
 import onChange from 'on-change';
-import { v4 as uuidv4 } from 'uuid';
-import state from './state.js';
+import i18next from 'i18next';
+import ru from './locale/ru.js';
+import initialState from './state.js';
 
-export const pageElements = {
+const i18instance = i18next.createInstance();
+await i18instance.init({
+  lng: initialState.defLang,
+  debug: true,
+  resources: {
+    ru,
+  },
+});
+
+const pageElements = {
   form: document.querySelector('.rss_form'),
   title: document.querySelector('#title'),
   subtitle: document.querySelector('#subtitle'),
@@ -15,16 +25,9 @@ export const pageElements = {
   body: document.body,
 };
 
-const updateFormAndBtn = (watchState) => {
-  pageElements.input.value = '';
-  pageElements.input.focus();
-  pageElements.button.disabled = watchState.form.status === 'filling';
-};
-
-const renderErrors = (watchState, i18n) => {
+const renderErrors = (value, i18n) => {
   try {
-    console.log('Current status:', watchState.form.status); // Для отладки
-    switch (watchState.form.status) {
+    switch (value) {
       case 'alreadyExists':
         pageElements.feedback.textContent = i18n.t('response.alreadyExists');
         break;
@@ -44,7 +47,7 @@ const renderErrors = (watchState, i18n) => {
         pageElements.feedback.textContent = '';
         break;
     }
-    if (watchState.form.status !== 'processed') {
+    if (value !== 'processed') {
       pageElements.feedback.style.color = 'red';
     } else {
       pageElements.feedback.style.color = 'green';
@@ -53,19 +56,6 @@ const renderErrors = (watchState, i18n) => {
     console.error('Unexpected behavior:', err);
   }
 };
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-undef */
-const renderStaticElements = (elements, i18n) => {
-  const keys = Object.keys(elements);
-  keys.forEach((key) => {
-    const updatedText = i18n.t(`${key}`);
-    if (elements[key]) {
-      elements[key].textContent = updatedText;
-    }
-  });
-  return elements;
-};
-/* eslint-enable no-param-reassign */
 
 // legendarnaya funkciya :)
 const makeRead = (e) => {
@@ -148,18 +138,12 @@ const createFeedItem = (title, descriptions) => {
   feedItem.append(itemH3, itemP);
   return feedItem;
 };
-const watchState = onChange(state, (path) => {
-  if (path === 'form.status') {
-    renderErrors(state, i18n);
-  }
-});
 
-const renderFeed = () => {
+const renderFeed = (feeds) => {
   const postBlock = pageElements.postsContainer;
   const feedBlock = pageElements.feedsContainer;
-  const { feeds } = watchState;
-  const { titles, descriptions, posts } = feeds;
 
+  // Создаем обертки только если их еще нет
   if (!postBlock.querySelector('.card')) {
     createWrapper(postBlock);
   }
@@ -173,19 +157,35 @@ const renderFeed = () => {
   postsUl.innerHTML = '';
   feedsUl.innerHTML = '';
 
-  titles.map((title, index) => {
-    const feedItem = createFeedItem(title, descriptions[index]);
-    return feedsUl.append(feedItem);
-  });
-  /* eslint-disable no-param-reassign */
-  posts.map((post) => {
-    const id = uuidv4();
-    const postItem = createPostItem(post.id = id, post.title, post.link, post.read);
-    return postsUl.append(postItem);
+  feeds.forEach((feed) => {
+    const { feedTitle, feedDescription } = feed;
+    const feedItem = createFeedItem(feedTitle, feedDescription);
+    feedsUl.append(feedItem);
+
+    feed.posts.map((post) => {
+      const postItem = createPostItem(post.id, post.title, post.link, post.read);
+      return postsUl.append(postItem);
+    });
   });
 };
-/* eslint-enable no-param-reassign */
+
+export const watchedState = onChange(initialState, (path, curValue, prev) => {
+  console.log(`Path changed: ${path}. Previous: ${prev}, Current: ${curValue}`);
+
+  if (path === 'form.status') {
+    renderErrors(curValue, i18instance);
+    pageElements.button.disabled = (curValue === 'filling');
+
+    if (prev === 'filling') {
+      pageElements.input.value = '';
+      pageElements.input.focus();
+    }
+  }
+  if (path === 'feeds') {
+    renderFeed(watchedState.feeds);
+  }
+});
+
 export {
-  renderErrors, renderStaticElements, renderFeed, makeRead, showModal,
-  updateFormAndBtn,
+  makeRead, showModal, pageElements, i18instance,
 };
