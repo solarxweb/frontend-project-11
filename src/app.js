@@ -89,7 +89,7 @@ const app = async () => {
           feedDescription,
           posts: postsWithIds,
         });
-        watchedState.form.status = "processed";
+        watchedState.form.status = 'processed';
       })
       .catch((error) => {
         console.error(error);
