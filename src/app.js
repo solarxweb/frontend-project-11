@@ -117,4 +117,4 @@ const app = async () => {
 };
 
 checkNewPosts();
-export { app, i18instance };
+export default app;
