@@ -1,16 +1,7 @@
+// eslint-disable import/no-cycle
 import onChange from 'on-change';
-import i18next from 'i18next';
-import ru from './locale/ru.js';
 import initialState from './state.js';
-
-const i18instance = i18next.createInstance();
-await i18instance.init({
-  lng: initialState.defLang,
-  debug: true,
-  resources: {
-    ru,
-  },
-});
+import { i18instance } from './app.js';
 
 const pageElements = {
   form: document.querySelector('.rss_form'),
@@ -25,23 +16,23 @@ const pageElements = {
   body: document.body,
 };
 
-const renderErrors = (value, i18n) => {
+const renderErrors = (value, i18next) => {
   try {
     switch (value) {
       case 'alreadyExists':
-        pageElements.feedback.textContent = i18n.t('response.alreadyExists');
+        pageElements.feedback.textContent = i18next.t('response.alreadyExists');
         break;
       case 'processed':
-        pageElements.feedback.textContent = i18n.t('response.urlAdded');
+        pageElements.feedback.textContent = i18next.t('response.urlAdded');
         break;
       case 'incorrectUrl':
-        pageElements.feedback.textContent = i18n.t('response.incorrectUrl');
+        pageElements.feedback.textContent = i18next.t('response.incorrectUrl');
         break;
       case 'invalidResource':
-        pageElements.feedback.textContent = i18n.t('response.invalidResource');
+        pageElements.feedback.textContent = i18next.t('response.invalidResource');
         break;
       case 'networkErr':
-        pageElements.feedback.textContent = i18n.t('response.networkErr');
+        pageElements.feedback.textContent = i18next.t('response.networkErr');
         break;
       default:
         pageElements.feedback.textContent = '';
@@ -57,14 +48,18 @@ const renderErrors = (value, i18n) => {
   }
 };
 
-// legendarnaya funkciya :)
-const makeRead = (e) => {
-  e.target.classList.remove('fw-bold');
-  e.target.classList.add('fw-normal', 'link-secondary');
+const makeRead = (id) => {
+  const anchor = document.querySelector(`a[data-id="${id}"]`);
+  anchor.classList.remove('fw-bold');
+  anchor.classList.add('fw-normal', 'link-secondary');
 };
 
-// chut' menee legendarnaya
-const showModal = (title, description, link, anchor) => {
+const showModal = (post) => {
+  console.log(post);
+  const {
+    id, title, description, link,
+  } = post;
+  const anchor = document.querySelector(`a[data-id="${id}"]`);
   const modalTitle = document.querySelector('.modal-title');
   modalTitle.textContent = title;
 
@@ -143,7 +138,6 @@ const renderFeed = (feeds) => {
   const postBlock = pageElements.postsContainer;
   const feedBlock = pageElements.feedsContainer;
 
-  // Создаем обертки только если их еще нет
   if (!postBlock.querySelector('.card')) {
     createWrapper(postBlock);
   }
@@ -170,8 +164,9 @@ const renderFeed = (feeds) => {
 };
 
 export const watchedState = onChange(initialState, (path, curValue, prev) => {
-  console.log(`Path changed: ${path}. Previous: ${prev}, Current: ${curValue}`);
-
+  if (path === 'preparedness') {
+    pageElements.input.focus();
+  }
   if (path === 'form.status') {
     renderErrors(curValue, i18instance);
     pageElements.button.disabled = (curValue === 'filling');
@@ -181,11 +176,19 @@ export const watchedState = onChange(initialState, (path, curValue, prev) => {
       pageElements.input.focus();
     }
   }
-  if (path === 'feeds') {
+  if (path === 'feeds' || path === 'posts') {
     renderFeed(watchedState.feeds);
+  }
+  if (path === 'watchedResources') {
+    const subject = watchedState.watchedResources.at(-1);
+    if (subject.clickedOn === 'button') {
+      showModal(subject.post);
+    } else {
+      makeRead(subject.element);
+    }
   }
 });
 
 export {
-  makeRead, showModal, pageElements, i18instance,
+  makeRead, showModal, pageElements,
 };

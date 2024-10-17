@@ -1,5 +1,6 @@
 export default {
   defLang: 'ru',
+  pagePreparedness: '',
   form: {
     url: '',
     status: 'waiting',
@@ -7,4 +8,5 @@ export default {
   },
   feeds: [],
   subscribes: [],
+  watchedResources: [],
 };

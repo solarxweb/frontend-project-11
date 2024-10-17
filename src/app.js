@@ -1,11 +1,16 @@
 import * as yup from 'yup';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  watchedState, pageElements, showModal,
-  makeRead, i18instance,
-} from './view.js';
+import i18next from 'i18next';
+import { watchedState, pageElements } from './view.js';
+import ru from './locale/ru.js';
 import fetchFeed from './fetch.js';
 import parseFeed from './parser.js';
+
+const i18instance = i18next.createInstance();
+
+document.addEventListener('DOMContentLoaded', () => {
+  watchedState.pagePreparedness = 'prepared';
+});
 
 const checkNewPosts = () => {
   /* eslint-disable prefer-destructuring */
@@ -13,8 +18,8 @@ const checkNewPosts = () => {
   /* eslint-enable prefer-destructuring */
 
   const promises = watchedState.subscribes.map((feedUrl) => fetchFeed(feedUrl)
-    .then((data) => parseFeed(data.contents))
-    .then((result) => {
+    .then((data) => {
+      const result = parseFeed(data.contents);
       const oldPosts = watchedState.feeds.flatMap((feed) => feed.posts);
       const { fTitle, posts } = result;
       const existingNames = new Set(oldPosts.map(({ title }) => title));
@@ -45,76 +50,85 @@ const checkNewPosts = () => {
     });
 };
 
-const app = async () => {
-  const { form, input, postsContainer } = pageElements;
-  input.focus();
-
-  yup.setLocale({
-    string: {
-      url: i18instance.t('response.incorrectUrl'),
-      notOneOf: i18instance.t('response.alreadyExists'),
+export const app = () => {
+  i18instance.init({
+    lng: watchedState.defLang,
+    debug: true,
+    resources: {
+      ru,
     },
-  });
+  }).then(() => {
+    const { form, input, postsContainer } = pageElements;
 
-  const validateUrl = (url, urls) => {
-    const schema = yup
-      .string()
-      .trim()
-      .url('incorrectUrl')
-      .notOneOf(urls, 'alreadyExists');
-    return schema.validate(url);
-  };
+    yup.setLocale({
+      string: {
+        url: i18instance.t('response.incorrectUrl'),
+        notOneOf: i18instance.t('response.alreadyExists'),
+      },
+    });
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    watchedState.form.status = 'filling';
-    const incomingValue = input.value.trim();
+    const validateUrl = (url, urls) => {
+      const schema = yup
+        .string()
+        .trim()
+        .url('incorrectUrl')
+        .notOneOf(urls, 'alreadyExists');
+      return schema.validate(url);
+    };
 
-    validateUrl(incomingValue, watchedState.subscribes)
-      .then((url) => {
-        watchedState.form.validation = true;
-        return fetchFeed(url);
-      })
-      .then((data) => {
-        const parsedPage = parseFeed(data.contents);
-        const { feedTitle, feedDescription, posts } = parsedPage;
-        watchedState.subscribes.push(incomingValue);
-        const postsWithIds = posts.map((post) => ({
-          ...post,
-          id: uuidv4(),
-          read: false,
-        }));
-        watchedState.feeds.push({
-          feedTitle,
-          feedDescription,
-          posts: postsWithIds,
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      watchedState.form.status = 'filling';
+      const incomingValue = input.value.trim();
+
+      validateUrl(incomingValue, watchedState.subscribes)
+        .then((url) => {
+          watchedState.form.validation = true;
+          return fetchFeed(url);
+        })
+        .then((data) => {
+          const parsedPage = parseFeed(data.contents);
+          const { feedTitle, feedDescription, posts } = parsedPage;
+          watchedState.subscribes.push(incomingValue);
+          const postsWithIds = posts.map((post) => ({
+            ...post,
+            id: uuidv4(),
+            read: false,
+          }));
+          watchedState.feeds.push({
+            feedTitle,
+            feedDescription,
+            posts: postsWithIds,
+          });
+          watchedState.form.status = 'processed';
+        })
+        .catch((error) => {
+          console.error(error);
+          watchedState.form.validation = false;
+          watchedState.form.status = error.message;
         });
-        watchedState.form.status = 'processed';
-      })
-      .catch((error) => {
-        console.error(error);
-        watchedState.form.validation = false;
-        watchedState.form.status = error.message;
-      });
-  });
+    });
 
-  postsContainer.addEventListener('click', (e) => {
-    const elementId = e.target.dataset.id;
-    const posts = watchedState.feeds.flatMap((feed) => feed.posts);
-    const post = posts.find((p) => p.id === elementId);
-    if (!post) {
-      return;
-    }
-    post.read = true;
-    if (e.target instanceof HTMLAnchorElement) {
-      makeRead(e);
-    }
-    if (e.target instanceof HTMLButtonElement) {
-      const anchor = e.target.previousSibling;
-      showModal(post.title, post.description, post.link, anchor);
-    }
+    postsContainer.addEventListener('click', (e) => {
+      const elementId = e.target.dataset.id;
+      const posts = watchedState.feeds.flatMap((feed) => feed.posts);
+      const post = posts.find((p) => p.id === elementId);
+      console.log(post);
+      if (!post) {
+        return;
+      }
+      post.read = true;
+      if (e.target.tagName === 'BUTTON') {
+        watchedState.watchedResources.push({ clickedOn: 'button', post });
+      } else if (e.target.tagName === 'A') {
+        watchedState.watchedResources.push({ clickedOn: 'link', element: elementId });
+        console.log(watchedState.watchedResources);
+      }
+    });
+  }).catch((error) => {
+    console.error('Ошибка инициализации i18next:', error);
   });
+  checkNewPosts();
 };
 
-checkNewPosts();
-export default app;
+export { i18instance };
