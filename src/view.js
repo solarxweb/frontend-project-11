@@ -1,7 +1,6 @@
-// eslint-disable import/no-cycle
 import onChange from 'on-change';
-import initialState from './state.js';
-import { i18instance } from './app.js';
+
+import state from './state.js';
 
 const pageElements = {
   form: document.querySelector('.rss_form'),
@@ -16,35 +15,12 @@ const pageElements = {
   body: document.body,
 };
 
-const renderErrors = (value, i18next) => {
-  try {
-    switch (value) {
-      case 'alreadyExists':
-        pageElements.feedback.textContent = i18next.t('response.alreadyExists');
-        break;
-      case 'processed':
-        pageElements.feedback.textContent = i18next.t('response.urlAdded');
-        break;
-      case 'incorrectUrl':
-        pageElements.feedback.textContent = i18next.t('response.incorrectUrl');
-        break;
-      case 'invalidResource':
-        pageElements.feedback.textContent = i18next.t('response.invalidResource');
-        break;
-      case 'networkErr':
-        pageElements.feedback.textContent = i18next.t('response.networkErr');
-        break;
-      default:
-        pageElements.feedback.textContent = '';
-        break;
-    }
-    if (value !== 'processed') {
-      pageElements.feedback.style.color = 'red';
-    } else {
-      pageElements.feedback.style.color = 'green';
-    }
-  } catch (err) {
-    console.error('Unexpected behavior:', err);
+const renderErrors = (value) => {
+  pageElements.feedback.textContent = value;
+  if (value !== 'RSS успешно загружен') {
+    pageElements.feedback.style.color = 'red';
+  } else {
+    pageElements.feedback.style.color = 'green';
   }
 };
 
@@ -55,7 +31,6 @@ const makeRead = (id) => {
 };
 
 const showModal = (post) => {
-  console.log(post);
   const {
     id, title, description, link,
   } = post;
@@ -163,14 +138,14 @@ const renderFeed = (feeds) => {
   });
 };
 
-export const watchedState = onChange(initialState, (path, curValue, prev) => {
+const watchedState = onChange(state, (path, curValue, prev) => {
   if (path === 'preparedness') {
     pageElements.input.focus();
   }
   if (path === 'form.status') {
-    renderErrors(curValue, i18instance);
+    if (curValue === 'filling') return;
+    renderErrors(curValue);
     pageElements.button.disabled = (curValue === 'filling');
-
     if (prev === 'filling') {
       pageElements.input.value = '';
       pageElements.input.focus();
@@ -184,11 +159,12 @@ export const watchedState = onChange(initialState, (path, curValue, prev) => {
     if (subject.clickedOn === 'button') {
       showModal(subject.post);
     } else {
-      makeRead(subject.element);
+      makeRead(subject.elementId);
     }
   }
 });
 
 export {
   makeRead, showModal, pageElements,
+  watchedState,
 };

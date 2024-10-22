@@ -1,12 +1,11 @@
 import * as yup from 'yup';
-import { v4 as uuidv4 } from 'uuid';
 import i18next from 'i18next';
-import { watchedState, pageElements } from './view.js';
+import { v4 as uuidv4 } from 'uuid';
 import ru from './locale/ru.js';
+import { watchedState, pageElements } from './view.js';
 import fetchFeed from './fetch.js';
 import parseFeed from './parser.js';
-
-const i18instance = i18next.createInstance();
+import state from './state.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   watchedState.pagePreparedness = 'prepared';
@@ -50,23 +49,14 @@ const checkNewPosts = () => {
     });
 };
 
-export const app = () => {
+const app = () => {
+  const i18instance = i18next.createInstance();
   i18instance.init({
-    lng: watchedState.defLang,
+    lng: state.defLang,
     debug: true,
-    resources: {
-      ru,
-    },
+    resources: { ru },
   }).then(() => {
     const { form, input, postsContainer } = pageElements;
-
-    yup.setLocale({
-      string: {
-        url: i18instance.t('response.incorrectUrl'),
-        notOneOf: i18instance.t('response.alreadyExists'),
-      },
-    });
-
     const validateUrl = (url, urls) => {
       const schema = yup
         .string()
@@ -89,6 +79,7 @@ export const app = () => {
         .then((data) => {
           const parsedPage = parseFeed(data.contents);
           const { feedTitle, feedDescription, posts } = parsedPage;
+
           watchedState.subscribes.push(incomingValue);
           const postsWithIds = posts.map((post) => ({
             ...post,
@@ -100,12 +91,12 @@ export const app = () => {
             feedDescription,
             posts: postsWithIds,
           });
-          watchedState.form.status = 'processed';
+          watchedState.form.status = i18instance.t('response.urlAdded');
         })
         .catch((error) => {
           console.error(error);
           watchedState.form.validation = false;
-          watchedState.form.status = error.message;
+          watchedState.form.status = i18instance.t(`response.${error.message}`);
         });
     });
 
@@ -113,7 +104,6 @@ export const app = () => {
       const elementId = e.target.dataset.id;
       const posts = watchedState.feeds.flatMap((feed) => feed.posts);
       const post = posts.find((p) => p.id === elementId);
-      console.log(post);
       if (!post) {
         return;
       }
@@ -121,14 +111,12 @@ export const app = () => {
       if (e.target.tagName === 'BUTTON') {
         watchedState.watchedResources.push({ clickedOn: 'button', post });
       } else if (e.target.tagName === 'A') {
-        watchedState.watchedResources.push({ clickedOn: 'link', element: elementId });
+        watchedState.watchedResources.push({ clickedOn: 'link', elementId });
         console.log(watchedState.watchedResources);
       }
     });
-  }).catch((error) => {
-    console.error('Ошибка инициализации i18next:', error);
   });
   checkNewPosts();
 };
 
-export { i18instance };
+export default app;
